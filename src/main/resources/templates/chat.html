@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Chat Room | Any-Chat</title>
+    <meta charset="utf-8">
+    <link href="/webjars/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <script src="/webjars/jquery/jquery.min.js"></script>
+    <script src="/webjars/sockjs-client/sockjs.min.js"></script>
+    <script src="/webjars/stomp-websocket/stomp.min.js"></script>
+    <meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+    <style>
+        .friend{
+            border: none;
+            background-color: #FFFFFF;
+            padding: 5px;
+        }
+
+        .friend:hover{
+            border: solid 1px #337AB7;
+            border-radius: 3px;
+        }
+
+        .f-nickname{
+            font-family: "微软雅黑";
+        }
+
+        .f-image{
+            width: 43px;
+            height: 43px;
+        }
+
+        .message-box-left{
+            background-color: #FA8072;
+            color: #FFFFFF;
+            width: 100%;
+            border-radius: 3px;
+            display: inline-block;
+            padding: 5px 10px;
+            white-space:normal;
+            word-break:break-all;
+            overflow:hidden;
+        }
+
+        .message-box-right{
+            background-color: #FA8072;
+            color: #FFFFFF;
+            width: 100%;
+            border-radius: 3px;
+            display: inline-block;
+            float: right;
+            margin-right: 5px;
+            padding: 5px 10px;
+            white-space:normal;
+            word-break:break-all;
+            overflow:hidden;
+        }
+
+        .user-nickname{
+            margin-bottom: 2px;
+            display: inline-block;
+        }
+
+        .my-user-nickname{
+            margin-bottom: 2px;
+            display: inline-block;
+            float: right;
+            margin-right: 5px;
+            margin-top: 2px;
+        }
+
+        .user-time{
+            margin-bottom: 2px;
+            display: inline-block;
+            color: #ADADAD;
+        }
+
+        .my-user-time{
+            margin-bottom: 2px;
+            margin-top: 2px;
+            display: inline-block;
+            color: #ADADAD;
+            float: right;
+            margin-right: 5px;
+        }
+
+        .message-div{
+            float: left;
+            margin-left: 5px;
+            width: 100%;
+            margin-bottom: 5px;
+            position: relative;
+        }
+
+        .my-message-div{
+            float: right;
+            margin-right: 5px;
+            width: 100%;
+            margin-bottom: 5px;
+            position: relative;
+        }
+
+    </style>
+</head>
+<body>
+<body style="background-color: #f1f1f1; padding-bottom: 0">
+
+
+
+//将值赋给hidden域
+<input type="hidden" th:value="${user.username}" id="user_hidden"/>
+<input type="hidden" th:value="${user.nickname}" id="nickname_hidden"/>
+<input type="hidden" th:value="${user.avatar}" id="avatar_hidden"/>
+
+
+<div th:insert="~{header :: nav (username = ${user.username})}"></div>
+
+<!-- Start Content -->
+<div style="margin-top: 60px">
+
+	<div class="row" style="margin: 0 0 10px 20px">
+		<form class="form-inline" onSubmit="return false;">
+  			<div class="form-group">
+   	 			<input type="text" class="form-control" id="friendInput" placeholder="好友帐号">
+  			</div>
+  			<button class="btn btn-default" id="addBtn">添加好友</button>
+  			<button class="btn btn-default disabled" id="groupBtn">群聊模式</button>
+		</form>
+	</div>
+
+    <div class="row center-block">
+
+        <div style="margin: 0 10px; width: 350px; display: inline-block">
+
+            <div class="panel panel-danger" >
+
+
+                <!-- 当前登录用户信息，头像和昵称 -->
+                <div class="panel-heading">
+                    <div style="display: inline-block; float: left">
+                        <img th:src="${user.avatar}" alt="" class="img-circle img-responsive" height="64px" width="64px" style="margin: 0 10px;">
+                    </div>
+                    <div style="display:inline-block; width: 200px; height: 64px;">
+                        <p style="margin: 0; padding: 6px 0; font-size: 20px" th:text="${user.nickname}"></p>
+                        <p style="margin-bottom: 0; overflow: hidden; height: 16px">Online</p>
+                    </div>
+                </div>
+
+                <div class="panel-body" style="height: 390px; overflow-y: scroll; overflow: auto">
+
+                    <button class="friend" th:each="friend : ${friends}">
+                        <div class="media-left">
+                            <a href="#">
+                                <img class="media-object f-image img-circle" th:src="${friend.avatar}" alt="">
+                            </a>
+                        </div>
+                        <div class="media-body" style="text-align: left">
+                            <h4 class="media-heading f-nickname" th:text="${friend.nickname}"></h4>
+                            <p class="text-danger f-signature" th:text="${#dates.format(friend.joinTime, 'MM-dd HH:mm')}">offline</p>
+                            <p class="hidden f-username" th:text="${friend.username}">anoy</p>
+                        </div>
+                    </button>
+
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-8">
+
+            <!-- 消息显示 -->
+            <div class="panel panel-primary">
+
+                <!-- 窗口顶部 >_[当前]-[所有人]  -->
+                <div class="panel-heading">
+                    <h3 class="panel-title"><span class="glyphicon glyphicon-console"></span> [当前] - [<span id="target">所有人</span>]</h3>
+                </div>
+
+                <!-- 消息窗口 -->
+                <div class="panel-body" style="height: 380px; overflow-y: scroll; overflow: auto" id="messageWindow">
+
+                    <!--<div class='my-message-div row'>
+                        <div style="float: right;height:45px;width: 45px;margin-right: 5px;">
+                            <img src="/image/avatar/avatar5.jpg" style="height: 43px;width: 43px;margin: 0 auto;border-radius: 22px;">
+                        </div>
+                        <div style="margin-right: 5px;width: 40%;float: right;">
+                            <p class='my-user-nickname'>浩哥哥</p><p class='my-user-time'>1-15 15:15</p><br>
+                            <div class='message-box-right'>xcvbnm,lkjhgxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxssssssssssssssssssssssswxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxaaaaaaaaaaaaaaafdsdfghjdcwdcwec</div>
+                        </div>
+                    </div>-->
+
+                </div>
+
+            </div>
+
+            <!-- 消息输入 -->
+            <div class="row">
+
+                <!-- 消息输入框 -->
+                <div class="col-xs-9 col-md-10">
+                    <input type="text" class="form-control" placeholder="Message" id="message">
+                </div>
+
+                <!-- 发送按钮 -->
+                <div class="col-xs-3 col-md-2">
+                    <button class="btn btn-primary btn-block" id="send"><span class="glyphicon glyphicon-send"></span> 发送</button>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+
+    var target = "TO_ALL";
+
+    var stompClient = null;
+
+
+    function connect() {
+        // 建立连接对象（还未发起连接）
+        var socket = new SockJS('/any-socket');
+        // 获取 STOMP 子协议的客户端对象
+        stompClient = Stomp.over(socket);
+
+
+        // 向服务器发起 Web Socket 连接并发送CONNECT帧
+        stompClient.connect({}, function (frame) {
+            console.log('发送Connected帧: ' + frame);
+
+            //客户端消息订阅,群发订阅
+            stompClient.subscribe('/topic/notice', function (message) {
+
+                var username = (JSON.parse(message.body)).username;
+                // console.log(JSON.parse(message.body).username);
+                if($("#user_hidden").val() == username){
+                    showMyMessage(JSON.parse(message.body));
+                }else {
+                    showMessage(JSON.parse(message.body));
+                }
+            });
+
+            //私发订阅
+            stompClient.subscribe('/topic/chat/'+$("#user_hidden").val(), function (message) {
+                console.log("接收>>>==="+message);
+                showMessage(JSON.parse(message.body));
+            });
+        });
+    }
+
+    //别人发的
+    function showMessage(message) {
+        $("#messageWindow").append(
+            "<div class='message-div row'>"+
+                "<div style='display: inline-block; margin-right: 5px;' >"+
+                    "<img class='media-object f-image img-circle' style='position: absolute' src=" + message.avatar + ">"+
+                "</div>"+
+                "<div style='margin-left: 55px;width: 40%;'>"+
+                    "<p class='user-nickname'>" + message.nickname + "</p> <p class='user-time'>"+message.sendTime+"</p><br>"+
+                    "<div class='message-box-left'>" + message.content + "</div>" +
+                "</div>" +
+            "</div><br>"
+        );
+    }
+
+    //自己发的
+    function showMyMessage(message) {
+        $("#messageWindow").append(
+            "<div class='my-message-div row'>"+
+                "<div style='float: right;height:45px;width: 45px;margin-right: 5px;'>" +
+                    "<img src=" + message.avatar + " style='height: 43px;width: 43px;margin: 0 auto;border-radius: 22px;'>" +
+                "</div>" +
+                "<div style='margin-right: 5px;width: 40%;float: right;'>" +
+                    "<p class='my-user-nickname'>" + message.nickname + "</p> <p class='my-user-time'>"+message.sendTime+"</p><br>" +
+                    "<div class='message-box-right'>" + message.content + "</div>" +
+                "</div>" +
+            "</div><br>"
+        );
+
+
+    }
+
+    function add0(int){
+        if(int < 10)
+            return "0"+int;
+    }
+
+    $(function () {
+        connect();
+
+        //发送按钮
+        $("#send").click(function () {
+
+            //发送到全部
+            if (target == "TO_ALL"){
+                //客户端可使用 send () 方法向服务器发送信息：$("#message").val()
+                var body = $("#user_hidden").val()+"-"+$("#message").val();
+                stompClient.send("/app/all", {}, body);
+            }else{
+
+                //发送给好友
+                //var content = "{'type':'text','content':'" + $("#message").val() + "','toType':'USER','receiver':'"+target+"'}";
+                // var body = $("#user_hidden").val()+"-"+target+$("#message").val();
+                var baseMessage = {
+                    type:"text",
+                    content:$("#message").val(),
+                    sender:$("#user_hidden").val(),
+                    toType:"USER",
+                    receiver:target,
+                    date:new Date()
+                };
+                stompClient.send("/app/chat", {}, JSON.stringify(baseMessage));
+                var date = new Date();
+                var month = date.getMonth()*1+1;
+                var chatMessage = {
+                    username: baseMessage.sender,
+                    nickname: $("#nickname_hidden").val(),
+                    avatar: $("#avatar_hidden").val(),
+                    content: baseMessage.content,
+                    sendTime: add0(month)+"-"+add0(date.getDate()*1)+" "+date.getHours()+":"+date.getMinutes()
+                };
+                showMyMessage(chatMessage);
+                console.log(chatMessage);
+            }
+            $("#message").val("");
+            responMessage = null;
+        });
+
+        //点击好友
+        $(".friend").click(function () {
+            target = $(this).find("p.f-username").text();
+            var nickname = $(this).find("h4.f-nickname").text();
+            $("#target").text(nickname);
+            $("#groupBtn").attr("class","btn btn-default");
+        });
+
+        //群聊模式按钮
+        $("#groupBtn").click(function(){
+        	$(this).attr("class","btn btn-default disabled");
+        	target = "TO_ALL";
+        	$("#target").text("所有人");
+        });
+        
+        //添加好友
+        $("#addBtn").click(function(){
+        	var friend = $("#friendInput").val();
+        	var username = $("#user_hidden").val();
+        	if(friend.length == 0){
+        		return;
+        	}
+        	$.post("/api/common/add",
+        			{
+        			    "username" : username,
+        			    "friend" : friend
+                    },
+        			function(data){
+        				if(data){
+        					window.location.reload(); 		
+        				}else{
+        					alert("用户不存在，添加失败！");
+        				}
+        			}
+        	);
+        });
+
+        $("#loginout").show();
+        $("#login").hide();
+        $("#loginout").click(function () {
+
+            stompClient.disconnect(function () {
+                alert("再见！！")
+            })
+        })
+    });
+
+</script>
+<!-- End Content -->
+</body>
+</html>
