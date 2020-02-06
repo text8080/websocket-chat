@@ -63,7 +63,7 @@ public class UserController {
             session.setAttribute("username",user.getUsername());
             return "chat";
         }
-        return null;
+        return "/login";
     }
 
     @PostMapping("/add")
