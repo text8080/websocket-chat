@@ -7,7 +7,7 @@ import tk.mybatis.spring.annotation.MapperScan;
 
 @SpringBootApplication
 @EnableWebSocket
-@MapperScan(value = "com.chenhao.websocket.user.mapper")
+@MapperScan({"com.chenhao.websocket.user.mapper","com.chenhao.websocket.emoji.mapper"})
 public class ChatApp {
     public static void main(String[] args) {
         SpringApplication.run(ChatApp.class,args);
