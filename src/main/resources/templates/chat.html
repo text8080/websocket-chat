@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org">
 <head>
-    <title>Chat Room | Any-Chat</title>
+    <title>WebSocket</title>
     <meta charset="utf-8">
     <link href="/webjars/bootstrap/css/bootstrap.min.css" rel="stylesheet">
     <script src="/webjars/jquery/jquery.min.js"></script>
@@ -91,6 +91,11 @@
             position: relative;
         }
 
+        .myMessageView > img{
+            width: 24px;
+            height: 24px;
+        }
+
         .my-message-div{
             float: right;
             margin-right: 5px;
@@ -124,6 +129,18 @@
             height: 48px;
             padding: 5px 5px;
             cursor:pointer
+        }
+
+        #message{
+            margin-top: 24px;
+            font-size: 18px;
+            line-height: 100%;
+            overflow-y: auto;
+            overflow-x: auto;
+        }
+        #message > img{
+            width: 24px;
+            height: 24px;
         }
     </style>
 </head>
@@ -171,8 +188,8 @@
                     </div>
                 </div>
 
+                <!-- 好友 -->
                 <div class="panel-body" style="height: 390px; overflow-y: scroll; overflow: auto">
-
                     <button class="friend" th:each="friend : ${friends}">
                         <div class="media-left">
                             <a href="#">
@@ -185,7 +202,6 @@
                             <p class="hidden f-username" th:text="${friend.username}">anoy</p>
                         </div>
                     </button>
-
                 </div>
             </div>
         </div>
@@ -222,7 +238,8 @@
                 <div class="col-xs-9 col-md-10">
                     <img src="/image/emoji.png" class="message-box-ei" id="emoji">
                     <img src="/image/img.png" class="message-box-ei" id="img">
-                    <input type="text" class="form-control" placeholder="Message" id="message" >
+                    <!--<input type="text" class="form-control" placeholder="Message" id="message" >-->
+                    <div class="form-control" id="message" contenteditable="true"></div>
                 </div>
 
                 <!-- 发送按钮 -->
@@ -285,7 +302,7 @@
                 "</div>"+
                 "<div style='margin-left: 55px;width: 40%;'>"+
                     "<p class='user-nickname'>" + message.nickname + "</p> <p class='user-time'>"+message.sendTime+"</p><br>"+
-                    "<div class='message-box-left'>" + message.content + "</div>" +
+                    "<div class='message-box-left myMessageView'>" + message.content + "</div>" +
                 "</div>" +
             "</div><br>"
         );
@@ -300,7 +317,7 @@
                 "</div>" +
                 "<div style='margin-right: 5px;width: 40%;float: right;'>" +
                     "<p class='my-user-nickname'>" + message.nickname + "</p> <p class='my-user-time'>"+message.sendTime+"</p><br>" +
-                    "<div class='message-box-right'>" + message.content + "</div>" +
+                    "<div class='message-box-right myMessageView'>" + message.content + "</div>" +
                 "</div>" +
             "</div><br>"
         );
@@ -308,10 +325,18 @@
 
     }
 
+    //发送消息时间前补0
     function add0(int){
         if(int < 10)
             return "0"+int;
     }
+
+    //表情点击
+    function inputEmoji(emoji){
+        var emojiSrc = emoji.src;
+        $("#message").append("<img src='"+emojiSrc+"'>");
+    }
+
 
     $(function () {
         connect();
@@ -319,11 +344,23 @@
         //发送按钮
         $("#send").click(function () {
 
+            console.log($("#message").html());
+            var date = new Date();
+            var month = date.getMonth()*1+1;
+
+
             //发送到全部
             if (target == "TO_ALL"){
                 //客户端可使用 send () 方法向服务器发送信息：$("#message").val()
-                var body = $("#user_hidden").val()+"-"+$("#message").val();
-                stompClient.send("/app/all", {}, body);
+                var chatMessage = {
+                    username: $("#user_hidden").val(),
+                    nickname: $("#nickname_hidden").val(),
+                    avatar: $("#avatar_hidden").val(),
+                    content: $("#message").html(),
+                    sendTime: add0(month)+"-"+add0(date.getDate()*1)+" "+date.getHours()+":"+date.getMinutes()
+                };
+                // var body = $("#user_hidden").val()+"-"+$("#message").html();
+                stompClient.send("/app/all", {}, JSON.stringify(chatMessage));
             }else{
 
                 //发送给好友
@@ -331,15 +368,13 @@
                 // var body = $("#user_hidden").val()+"-"+target+$("#message").val();
                 var baseMessage = {
                     type:"text",
-                    content:$("#message").val(),
+                    content:$("#message").html(),
                     sender:$("#user_hidden").val(),
                     toType:"USER",
                     receiver:target,
                     date:new Date()
                 };
                 stompClient.send("/app/chat", {}, JSON.stringify(baseMessage));
-                var date = new Date();
-                var month = date.getMonth()*1+1;
                 var chatMessage = {
                     username: baseMessage.sender,
                     nickname: $("#nickname_hidden").val(),
@@ -350,7 +385,7 @@
                 showMyMessage(chatMessage);
                 console.log(chatMessage);
             }
-            $("#message").val("");
+            $("#message").html("");
             responMessage = null;
         });
 
@@ -391,6 +426,7 @@
         	);
         });
 
+        //检测登陆状态
         $("#loginout").show();
         $("#login").hide();
         $("#loginout").click(function () {
@@ -411,17 +447,24 @@
                 $("#emoji-box").show();
 
                 //$("#emoji-box").load("emoji.html");
-
+                $("#emoji-box").html("");
                 //遍历输出表情包
                 $.get("/emoji/get-emoji",function (rest) {
                     //console.log(rest[1].emoji);
                     for(var i = 0;i<rest.length;i++){
-                        //console.log(rest[i].emoji);
-                        $("#emoji-box").append("<img src="+rest[i].emoji+">")
+                        //var emojiSrc = " \' "+rest[i].emoji+ " \' ";
+                         // console.log("<img onclick='inputEmoji("+emojiSrc+")' src="+rest[i].emoji+">");
+
+                        $("#emoji-box").append("<img onclick='inputEmoji(this)' src="+rest[i].emoji+">")
                     }
                 })
             }else
                 $("#emoji-box").hide();
+        });
+
+        //表情框失去焦点就关闭
+        $("#emoji-box").blur(function () {
+            $("#emoji-box").hide();
         })
 
     });

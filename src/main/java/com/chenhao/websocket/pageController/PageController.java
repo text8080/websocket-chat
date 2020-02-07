@@ -57,6 +57,15 @@ public class PageController {
 	}
 
 	/**
+	 * 退出系统
+	 * @return
+	 */
+	@GetMapping(value = "/logout")
+	public String logout() {
+		return "index";
+	}
+
+	/**
 	 * 返回注册页
 	 * @return
 	 */

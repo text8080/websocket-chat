@@ -34,6 +34,7 @@ public class TbUser {
      */
     private String avatar;
 
+    //上线时间
     private Date joinTime;
 
     private Date createTime;

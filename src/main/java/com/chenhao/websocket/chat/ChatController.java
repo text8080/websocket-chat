@@ -29,23 +29,22 @@ public class ChatController {
 
 	/**
 	 * 群聊
-	 * @param username
-	 * @param message
+	 * @param chatMessage
 	 */
 	@MessageMapping("/all")
-	public void all(String messagebody) {
-        String[] strings = messagebody.split("-");
+	public void all(@RequestParam(value = "chatMessage") ChatMessage chatMessage) {
+        /*String[] strings = messagebody.split("-");
         String username = strings[0];
         String message = strings[1];
-		System.out.println("===>>>"+username+"----"+message);
-		ChatMessage chatMessage = createMessage(username, message);
-		template.convertAndSend("/topic/notice", JSON.toJSONString(chatMessage));
+		System.out.println("===>>>"+username+"----"+message);*/
+
+		ChatMessage chatMessage2 = createMessage(chatMessage.getUsername(), chatMessage.getContent());
+		template.convertAndSend("/topic/notice", JSON.toJSONString(chatMessage2));
 	}
 
 	/**
 	 * 单聊
-	 * @param user
-	 * @param message
+	 * @param baseMessage
 	 */
 	@MessageMapping("/chat")
 	public void chat(@RequestParam(value = "baseMessage") BaseMessage baseMessage) {
