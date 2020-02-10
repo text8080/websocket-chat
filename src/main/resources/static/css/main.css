@@ -1,36 +1,36 @@
-.friend{
+.friend {
     border: none;
     background-color: #FFFFFF;
     padding: 5px;
 }
 
-.friend:hover{
+.friend:hover {
     border: solid 1px #337AB7;
     border-radius: 3px;
 }
 
-.f-nickname{
+.f-nickname {
     font-family: "微软雅黑";
 }
 
-.f-image{
+.f-image {
     width: 43px;
     height: 43px;
 }
 
-.message-box-left{
+.message-box-left {
     background-color: #FA8072;
     color: #FFFFFF;
     width: 100%;
     border-radius: 3px;
     display: inline-block;
     padding: 5px 10px;
-    white-space:normal;
-    word-break:break-all;
-    overflow:hidden;
+    white-space: normal;
+    word-break: break-all;
+    overflow: hidden;
 }
 
-.message-box-right{
+.message-box-right {
     background-color: #FA8072;
     color: #FFFFFF;
     width: 100%;
@@ -39,17 +39,17 @@
     float: right;
     margin-right: 5px;
     padding: 5px 10px;
-    white-space:normal;
-    word-break:break-all;
-    overflow:hidden;
+    white-space: normal;
+    word-break: break-all;
+    overflow: hidden;
 }
 
-.user-nickname{
+.user-nickname {
     margin-bottom: 2px;
     display: inline-block;
 }
 
-.my-user-nickname{
+.my-user-nickname {
     margin-bottom: 2px;
     display: inline-block;
     float: right;
@@ -57,13 +57,13 @@
     margin-top: 2px;
 }
 
-.user-time{
+.user-time {
     margin-bottom: 2px;
     display: inline-block;
     color: #ADADAD;
 }
 
-.my-user-time{
+.my-user-time {
     margin-bottom: 2px;
     margin-top: 2px;
     display: inline-block;
@@ -72,7 +72,7 @@
     margin-right: 5px;
 }
 
-.message-div{
+.message-div {
     float: left;
     margin-left: 5px;
     width: 100%;
@@ -80,12 +80,12 @@
     position: relative;
 }
 
-.myMessageView > img{
-    width: 24px;
-    height: 24px;
-}
+/*.myMessageView > img{*/
+/*width: 24px;*/
+/*height: 24px;*/
+/*}*/
 
-.my-message-div{
+.my-message-div {
     float: right;
     margin-right: 5px;
     width: 100%;
@@ -93,42 +93,55 @@
     position: relative;
 }
 
-.message-box-ei{
+.message-box-ei {
     width: 24px;
     height: 24px;
     float: left;
     margin-left: 5px;
 }
 
-#emoji-box{
+#emoji-box {
     width: 30%;
     height: 300px;
     position: fixed;
     margin-top: -300px;
     margin-left: 0px;
     border-radius: 5px;
-    border: 1px solid rgb(255,232,124);
+    border: 1px solid rgb(255, 232, 124);
     background-color: #FFFFFF;
     overflow-y: auto;
     overflow-x: auto;
 }
 
-#emoji-box > img{
+#emoji-box > img {
     width: 48px;
     height: 48px;
     padding: 5px 5px;
-    cursor:pointer
+    cursor: pointer
 }
 
-#message{
+#message {
     margin-top: 24px;
     font-size: 18px;
     line-height: 100%;
     overflow-y: auto;
     overflow-x: auto;
+    white-space: normal;
+    word-break: break-all;
+    overflow: hidden;
 }
+
 /*
 #message > img{
     width: 24px;
     height: 24px;
 }*/
+
+.my-progress-bar {
+    height: 10px;
+    margin-top: 0px;
+    border-radius: 2px;
+}
+#my-progress-bar{
+    margin-top: 5px;
+}

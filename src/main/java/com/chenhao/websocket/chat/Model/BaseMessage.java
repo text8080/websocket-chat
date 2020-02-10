@@ -15,6 +15,11 @@ public class BaseMessage {
 	// 消息类型
 	private String type;
 
+	/**
+	 * 消息唯一键
+	 */
+	private String uuid;
+
 	// 消息内容
 	private String content;
 
