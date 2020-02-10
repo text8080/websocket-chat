@@ -80,6 +80,11 @@
     position: relative;
 }
 
+.myMessageView > img{
+    width: 24px;
+    height: 24px;
+}
+
 .my-message-div{
     float: right;
     margin-right: 5px;
@@ -87,3 +92,43 @@
     margin-bottom: 5px;
     position: relative;
 }
+
+.message-box-ei{
+    width: 24px;
+    height: 24px;
+    float: left;
+    margin-left: 5px;
+}
+
+#emoji-box{
+    width: 30%;
+    height: 300px;
+    position: fixed;
+    margin-top: -300px;
+    margin-left: 0px;
+    border-radius: 5px;
+    border: 1px solid rgb(255,232,124);
+    background-color: #FFFFFF;
+    overflow-y: auto;
+    overflow-x: auto;
+}
+
+#emoji-box > img{
+    width: 48px;
+    height: 48px;
+    padding: 5px 5px;
+    cursor:pointer
+}
+
+#message{
+    margin-top: 24px;
+    font-size: 18px;
+    line-height: 100%;
+    overflow-y: auto;
+    overflow-x: auto;
+}
+/*
+#message > img{
+    width: 24px;
+    height: 24px;
+}*/

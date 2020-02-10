@@ -33,10 +33,6 @@ public class ChatController {
 	 */
 	@MessageMapping("/all")
 	public void all(@RequestParam(value = "chatMessage") ChatMessage chatMessage) {
-        /*String[] strings = messagebody.split("-");
-        String username = strings[0];
-        String message = strings[1];
-		System.out.println("===>>>"+username+"----"+message);*/
 
 		ChatMessage chatMessage2 = createMessage(chatMessage.getUsername(), chatMessage.getContent());
 		template.convertAndSend("/topic/notice", JSON.toJSONString(chatMessage2));
