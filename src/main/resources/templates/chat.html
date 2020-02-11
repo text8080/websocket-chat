@@ -120,7 +120,7 @@
                     <button class="btn btn-danger btn-block" id="cancel">
                         <span class="glyphicon glyphicon-refresh"></span> 取消
                     </button>
-                    <div id="my-progress-bar" >
+                    <div id="my-progress-bar">
                         <div class="progress my-progress-bar">
                             <div class="progress-bar" role="progressbar" aria-valuenow="60" id="my-progress-bar-aria"
                                  aria-valuemin="0" aria-valuemax="100">
@@ -225,12 +225,34 @@
 
         if (files.length) {
             var file = files[0];
+            console.log("文件大小==》》" + file.size);
             var reader = new FileReader();//new一个FileReader实例
 
             if (/image/.test(file.type)) {//判断文件类型，是不是text类型
                 reader.onload = function () {
+                    var base64 = this.result;
+                    console.log("压缩前：" + base64.length);
 
-                    $("#message").append("<img src='"+ this.result+"' style='height: 40px;width: 40px;'/>");
+                    //处理缩放，转格式
+                    var _img = new Image();
+                    _img.src = base64;
+                    _img.onload = function () {
+
+                        //创建画板
+                        var _canvas = document.createElement("canvas");
+                        if (this.height > 100) {
+                            var w = this.width / this.height * 100;
+                            var h = 100;
+                        }
+                        _canvas.setAttribute("width", w);
+                        _canvas.setAttribute("height", h);
+                        _canvas.getContext("2d").drawImage(this, 0, 0, w, h);
+                        //画内容转base64；
+                        var _base64 = _canvas.toDataURL("image/jpeg");
+                        console.log(_base64.length);
+                        $("#message").append("<img src='" + _base64 + "' />");
+                    };
+
                 };
                 reader.readAsDataURL(file);
             } else {//判断文件是不是image类型
@@ -238,6 +260,7 @@
             }
         }
     }
+
 
 
     //对消息长度计算，超出后返回basemessage打包的数组，否组返回一个basemessage
@@ -294,7 +317,6 @@
         });
     }
 
-
     $(function () {
         connect();
 
@@ -312,16 +334,12 @@
                 //对消息长度计算，超出后返回basemessage打包的数组，否组返回一个basemessage
                 var baseMessage = getSize($("#message").html(), "ALL");
 
-                console.log("===>>>");
-                console.log(baseMessage);
-                //客户端可使用 send () 方法向服务器发送信息：$("#message").val()
-
-
+                //客户端可使用 send () 方法向服务器发送信息：$("#message").html()
                 for (var i = 0; i < baseMessage.length; i++) {
                     stompClient.send("/app/all", {}, JSON.stringify(baseMessage[i]));
-                    var aria = ((i+1)/baseMessage.length)*100 + "%";
+                    var aria = ((i + 1) / baseMessage.length) * 100 + "%";
                     console.log(aria);
-                    $("#my-progress-bar-aria").css("width",aria);
+                    $("#my-progress-bar-aria").css("width", aria);
 
                     //延时1s
                     var sleep = function (time) {
@@ -332,7 +350,7 @@
                     sleep(100); // 延时函数，单位 ms
                 }
 
-                $("#my-progress-bar-aria").css("width","0%");
+                $("#my-progress-bar-aria").css("width", "0%");
 
             } else {
 

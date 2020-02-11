@@ -64,6 +64,10 @@ public class ChatController {
             ChatMessage chatMessage2 = createMessage(baseMessage.getSender(), content);
             template.convertAndSend("/topic/notice", JSON.toJSONString(chatMessage2));
         }
+        if (baseMessage.getType().equals("text")){
+            ChatMessage chatMessage2 = createMessage(baseMessage.getSender(), baseMessage.getContent());
+            template.convertAndSend("/topic/notice", JSON.toJSONString(chatMessage2));
+        }
 
 
         /*ChatMessage chatMessage2 = createMessage(baseMessage.getSender(), baseMessage.getContent());
