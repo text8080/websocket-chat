@@ -108,7 +108,8 @@
                     <img src="/image/img.png" class="message-box-ei" id="img">
                     <!-- 文件输入框 -->
                     <input type="file" onchange="jsReadFiles(this.files)" id="file"
-                           style="filter:alpha(opacity=0);opacity:0;width: 0;height: 0;"/>
+                           style="filter:alpha(opacity=0);opacity:0;width: 0;height: 0;"
+                           accept="image/gif,image/jpeg,image/jpg,image/png,image/svg"/>
                     <div class="form-control" id="message" contenteditable="true" style="height: 90px;"></div>
                 </div>
 
@@ -144,11 +145,16 @@
 
 
     function connect() {
+
+
         // 建立连接对象（还未发起连接）
         var socket = new SockJS('/any-socket');
+
         // 获取 STOMP 子协议的客户端对象
         stompClient = Stomp.over(socket);
 
+        stompClient.heartbeat.outgoing = 5000;  // client will send heartbeats every 20000ms
+        stompClient.heartbeat.incoming = 1000;      // client does not want to receive heartbeats from the server
 
         // 向服务器发起 Web Socket 连接并发送CONNECT帧
         stompClient.connect({}, function (frame) {
@@ -170,8 +176,21 @@
                 console.log("接收>>>===" + message);
                 showMessage(JSON.parse(message.body));
             });
+        },function (m) {
+            alert("您的网络不佳");
+            //延时1s
+            var sleep = function (time) {
+                var startTime = new Date().getTime() + parseInt(time, 10);
+                while (new Date().getTime() < startTime) {
+                }
+            };
+            sleep(1000); // 延时函数，单位 ms
+            connect();
         });
     }
+
+
+
 
     //别人发的
     function showMessage(message) {
@@ -262,7 +281,6 @@
     }
 
 
-
     //对消息长度计算，超出后返回basemessage打包的数组，否组返回一个basemessage
     function getSize(message, toType) {
 
@@ -334,9 +352,14 @@
                 //对消息长度计算，超出后返回basemessage打包的数组，否组返回一个basemessage
                 var baseMessage = getSize($("#message").html(), "ALL");
 
+                //事务支持
+                var tx = stompClient.begin();
+
                 //客户端可使用 send () 方法向服务器发送信息：$("#message").html()
                 for (var i = 0; i < baseMessage.length; i++) {
-                    stompClient.send("/app/all", {}, JSON.stringify(baseMessage[i]));
+                    stompClient.send("/app/all", {transaction: tx.id}, JSON.stringify(baseMessage[i]));
+                    tx.commit();
+
                     var aria = ((i + 1) / baseMessage.length) * 100 + "%";
                     console.log(aria);
                     $("#my-progress-bar-aria").css("width", aria);
@@ -354,9 +377,13 @@
 
             } else {
 
+                //事务支持
+                var tx = stompClient.begin();
+
                 var baseMessage = getSize($("#message").html(), "USER");
                 baseMessage.forEach((e) => {
-                    stompClient.send("/app/chat", {}, JSON.stringify(e));
+                    stompClient.send("/app/chat", {transaction: tx.id}, JSON.stringify(e));
+                    tx.commit();
 
                     //延时1s
                     var sleep = function (time) {
